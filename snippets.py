@@ -1,30 +1,50 @@
 import sys
 import base64
 import binascii
+import char_freq
 
 
 def hex2base64(h):
     return base64.b64encode(bytearray.fromhex(h))
 
 
-def xor_bin_equal_len(b1, b2):
-    assert len(b1) == len(b2)
-    result = bytearray(b1)
+def xor_bin_equal_len(binary_left, binary_right):
+    assert len(binary_left) == len(binary_right)
+    result = bytearray(binary_left)
     for i in range(len(result)):
-        result[i] = b1[i] ^ b2[i]
+        result[i] = binary_left[i] ^ binary_right[i]
     return result
 
 
-def xor_hex_equal_len(h1, h2):
-    assert len(h1) == len(h2)
-    return xor_bin_equal_len(bytearray.fromhex(h1),
-        bytearray.fromhex(h2))
+def xor_hex_equal_len(hex_left, hex_right):
+    assert len(hex_left) == len(hex_right)
+    return xor_bin_equal_len(bytearray.fromhex(hex_left), 
+        bytearray.fromhex(hex_right))
+
+
+def xor_bin_single_char(binary, character):
+    result = bytearray(binary)
+    for i in range(len(binary)):
+        result[i] ^= character
+    return result
 
 
 def main():
-    assert len(sys.argv) == 3
-    print(binascii.hexlify(xor_hex_equal_len(sys.argv[1],
-        sys.argv[2])))
+    assert len(sys.argv) == 2
+    encrypted = bytearray.fromhex(sys.argv[1])
+
+    all_decrypted = []
+
+    for xor_byte in range(256):
+        current_encrypted = xor_bin_single_char(encrypted,
+            xor_byte)
+        score = char_freq.score_letter_frequency(current_encrypted)
+        all_decrypted.append((current_encrypted, score))
+    
+    all_decrypted.sort(key=lambda k: k[1])
+
+    for (decrypted, score) in all_decrypted:
+        print("%0.3f: %s" % (score, bytes(decrypted)))
 
 
 if __name__ == "__main__":

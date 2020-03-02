@@ -29,23 +29,22 @@ def xor_bin_single_char(binary, character):
     return result
 
 
+def xor_bin_rolling_key(binary, key):
+    result = bytearray(binary)
+
+    for i in range(len(binary)):
+        result[i] = binary[i] ^ key[i % len(key)]
+
+    return result
+
+
 def main():
     assert len(sys.argv) == 2
-    encrypted = bytearray.fromhex(sys.argv[1])
-
-    all_decrypted = []
-
-    for xor_byte in range(256):
-        current_encrypted = xor_bin_single_char(encrypted,
-            xor_byte)
-        score = char_freq.score_letter_frequency(current_encrypted)
-        all_decrypted.append((current_encrypted, score))
     
-    all_decrypted.sort(key=lambda k: k[1])
+    plain = """Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal"""
 
-    for (decrypted, score) in all_decrypted:
-        print("%0.3f: %s" % (score, bytes(decrypted)))
-
+    print(binascii.hexlify(xor_bin_rolling_key(bytes(plain, 'utf-8'), b'ICE')))
 
 if __name__ == "__main__":
     main()

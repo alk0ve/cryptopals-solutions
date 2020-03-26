@@ -10,7 +10,7 @@ MIN_KEY_LENGTH = 2
 MAX_KEY_LENGTH = 40
 
 
-def break_single_byte_xor(encrypted, cutoff=char_freq.MAX_DISTANCE):
+def break_single_byte_xor(encrypted, cutoff):
     results = []
     for xor_byte in range(0x100):
         unxored_guess = mybytes.xor_bin_single_char(encrypted, xor_byte)
@@ -34,14 +34,20 @@ def print_possible_key_sizes(encoded_content):
 
     size2score = {}
     
-    
     for key_size in range(MIN_KEY_LENGTH, MAX_KEY_LENGTH):
-        dist1 = hamming.hamming_distance(encoded_content[:key_size],
-            encoded_content[key_size: 2*key_size])
-        dist2 = hamming.hamming_distance(encoded_content[2*key_size: 3*key_size],
-            encoded_content[3*key_size: 4*key_size])
-        # average and normalize by dividing by key length
-        size2score[key_size] = (dist1 + dist2) / float((2 * key_size))
+        # let's try to average as many samples as we can
+        dist = 0
+        for i in range(int(len(encoded_content) / (2*key_size))):
+            dist += hamming.hamming_distance(encoded_content[i*2*key_size:(i*2 + 1)*key_size],
+                encoded_content[(i*2 + 1)*key_size: (i*2 + 2)*key_size])
+        size2score[key_size] = dist / float(int(len(encoded_content) / (2*key_size)) * key_size)
+
+        # dist1 = hamming.hamming_distance(encoded_content[:key_size],
+        #     encoded_content[key_size: 2*key_size])
+        # dist2 = hamming.hamming_distance(encoded_content[2*key_size: 3*key_size],
+        #     encoded_content[3*key_size: 4*key_size])
+        # # average and normalize by dividing by key length
+        # size2score[key_size] = (dist1 + dist2) / float((2 * key_size))
         
     for key_size, score in sorted(size2score.items(), key=lambda x: x[1]):
         print("%d: %.02f" % (key_size, score))
@@ -84,7 +90,7 @@ def main():
         
         for i, encrypted_block in enumerate(encrypted_blocks_transposed):
             results = break_single_byte_xor(encrypted_block, cutoff)
-            print("BYTE %d IN KEY:" % (i))
+            print("\n\nBYTE %d IN KEY:" % (i))
             for result in results:
                 print("\t0x%x (%s): %0.2f" % (result[0], chr(result[0]), result[1]))
                 print('\t\t%s' % bytes(result[2]))

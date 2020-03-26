@@ -1,40 +1,36 @@
-# doesn't sum exactly to 1 because floating point ¯\_(ツ)_/¯
-ENGLISH_LETTER_FREQUENCY = {'a': 0.08167, 'b': 0.01492, 'c': 0.02782, 'd': 0.04253,
-    'e': 0.12702, 'f': 0.02228, 'g': 0.02015, 'h': 0.06094, 'i': 0.06966,
-    'j': 0.00153, 'k': 0.00772, 'l': 0.04025, 'm': 0.02406, 'n': 0.06749,
-    'o': 0.07507, 'p': 0.01929, 'q': 0.00095, 'r': 0.05987, 's': 0.06327,
-    't': 0.09056, 'u': 0.02758, 'v': 0.00978, 'w': 0.0236, 'x': 0.0015,
-    'y': 0.01974, 'z': 0.00074}
+# based on: https://web.archive.org/web/20170918020907/http://www.data-compression.com/english.html
+# a to z
+LETTER_FREQUENCY = [0.0651738, 0.0124248, 0.0217339, 0.0349835, 0.1041442, 0.0197881, 0.0158610, 0.0492888, 0.0558094, 0.0009033, 0.0050529, 0.0331490, 0.0202124, 0.0564513, 0.0596302, 0.0137645, 0.0008606, 0.0497563, 0.0515760, 0.0729357, 0.0225134, 0.0082903, 0.0171272, 0.0013692, 0.0145984, 0.0007836]
+SPACE_FREQUENCY = 0.1918182
 
-# maximum possible distance from the ideal frequency
-MAX_DISTANCE = sum([(frequency ** 2)
-    for frequency in ENGLISH_LETTER_FREQUENCY.values()]) ** 0.5 
+# clone this
+EMPTY_CHAR_COUNT_DICT = dict([(b, 0) for b in range(0x100)])
 
-# copy this
-EMPTY_LETTER_COUNT_DICT = dict([(letter, 0) for letter in ENGLISH_LETTER_FREQUENCY])
+ENGLISH_CHARACTER_FREQUENCY = dict(EMPTY_CHAR_COUNT_DICT)
+for letter_index, freq in enumerate(LETTER_FREQUENCY):
+    ENGLISH_CHARACTER_FREQUENCY[ord('a') + letter_index] = freq
+ENGLISH_CHARACTER_FREQUENCY[ord(' ')] = SPACE_FREQUENCY
 
 
 def score_letter_frequency(text):
-    letter_count = dict(EMPTY_LETTER_COUNT_DICT) # copy
+    assert len(text) > 0
+    char_count = dict(EMPTY_CHAR_COUNT_DICT) # clone
     for c in text:
-        c = chr(c).lower()
-        if c in letter_count:
-            letter_count[c] += 1
+        # normalize to lower case
+        c = ord(chr(c).lower())
+        char_count[c] += 1
     
-    total_letter_count = float(sum(letter_count.values())) # float for division later
-
-    if total_letter_count == 0:
-        return MAX_DISTANCE
+    total_char_count = float(sum(char_count.values())) # float for division later
 
     # convert to frequency
-    for letter in letter_count:
-        letter_count[letter] /= total_letter_count
+    for char in char_count:
+        char_count[char] /= total_char_count
 
-    letter_frequency = letter_count
-    total = 0
+    char_frequency = char_count
+    distance = 0
 
-    for letter in ENGLISH_LETTER_FREQUENCY:
-        total += ((letter_frequency[letter]
-        - ENGLISH_LETTER_FREQUENCY[letter]) ** 2)
+    for b in range(0x100):
+        distance += ((char_frequency[b]
+        - ENGLISH_CHARACTER_FREQUENCY[b]) ** 2)
 
-    return total ** 0.5
+    return distance ** 0.5

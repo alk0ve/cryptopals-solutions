@@ -2,7 +2,7 @@ import sys
 import base64
 import binascii
 import char_freq
-import bytes
+import mybytes
 
 
 def main():
